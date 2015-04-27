@@ -83,11 +83,3 @@ for i in range(n_regions):
 				config['region '+str(i+1)]['line '+str(j+1)]['upper level']['g']+'\n')
 	
 file.close()
-
-# Run the code
-try:	
-#	call(['/usr/lib64/mpich/bin/mpirun','-np',sys.argv[2],'./lteCube', 'conf.input'])
-	call(['mpiexec','-n',sys.argv[2],'./lteCube', 'conf.input'])	
-except:
-	pass
-#	os.remove('conf.input')
