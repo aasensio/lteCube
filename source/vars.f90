@@ -54,7 +54,7 @@ implicit none
 	end type lineListType
 	
 	type configType
-		integer :: nPixelsChunk, nx, ny, nDepths, nRegions, nprocs, verbose, remainingColumns, activeSlaves
+		integer :: nPixelsChunk, nx, ny, nDepths, nRegions, nprocs, verbose, remainingColumns, activeSlaves, zeemanSynthesis
 		integer :: outputID, nx_id, ny_id, nstokes_id, nRegions_id, initialPixel
 		integer, pointer :: regionSize_id(:), regionLambda_id(:), regionStokes_id(:)
 		character(len=100) :: PeFile, TFile, BFile, thetaBFile, chiBFile, vFile, out_file, lTau500File
@@ -68,7 +68,7 @@ implicit none
 	
 	real(kind=8) :: identity(4,4)
 	
-	integer :: packageSizeAtmosphere, packageSizeStokes
+	integer :: packageSizeAtmosphere, packageSizeStokes, myrank
 	character, allocatable :: packageAtmosphere(:), packageStokes(:)		
 	
 end module globalModule

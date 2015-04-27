@@ -1,5 +1,5 @@
 program lteCube
-use globalModule, only : config, lineList, atmosphere3D, atmosphere, PH, identity, packageAtmosphere, packageSizeAtmosphere, packageStokes, packageSizeStokes
+use globalModule, only : config, lineList, atmosphere3D, atmosphere, PH, identity, packageAtmosphere, packageSizeAtmosphere, packageStokes, packageSizeStokes, myrank
 use ioModule, only : readConfigFile, initTransition, initAtmospheres, read3DModels, check
 use synthModule, only : generateAtomicZeemanComponents, synthAllRegionsAndPixels
 use mpiModule, only : mpiBroadcastGeneral, Master2Slave_SendAtmosphere, SlaveFromMaster_GetAtmosphere, Slave2Master_SendStokes, MasterFromSlave_GetStokes, killSlave
@@ -10,7 +10,7 @@ implicit none
 	character(len=8) :: date
 	character(len=10) :: time
 	character(len=5) :: zone
-	integer :: values(8), xPos, yPos, loop, myrank, stopFlag
+	integer :: values(8), xPos, yPos, loop, stopFlag
 	include 'mpif.h'
 
 	call MPI_INIT(mpi_status)
@@ -82,8 +82,8 @@ implicit none
 		xPos = 1
 		yPos = 1
 	else
-		yPos = mod(config%initialPixel, config%nx)
-		xPos = config%initialPixel - yPos * config%nx
+		yPos = config%initialPixel / config%nx
+		xPos = config%initialPixel - yPos * config%nx + 1
 	endif
 
 ! FOR PROFILING

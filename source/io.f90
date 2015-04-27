@@ -46,6 +46,7 @@ contains
 		open(unit=12,file=config_file,action='read',status='old')
 		
 		read(12,*) config%verbose
+		read(12,*) config%zeemanSynthesis
 		read(12,*) config%lTau500File
 		read(12,*) config%PeFile
 		read(12,*) config%TFile

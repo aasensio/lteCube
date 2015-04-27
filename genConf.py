@@ -10,7 +10,6 @@ from configobj import ConfigObj
 import sys
 import os
 from subprocess import call
-from ipdb import set_trace as stop
 
 if (len(sys.argv) < 2):
 	print "You need to give the configuration file"
@@ -36,6 +35,13 @@ if (config['general']['verbose']):
 	file.write("1\n")
 else:
 	file.write("0\n")
+
+# Write general information
+if (config['general']['zeeman synthesis'] == 'yes'):
+	file.write("1\n")
+else:
+	file.write("0\n")
+
 file.write("'"+config['model']['logtau500']+"'\n")
 file.write("'"+config['model']['electron density']+"'\n")
 file.write("'"+config['model']['temperature']+"'\n")

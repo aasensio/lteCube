@@ -17,6 +17,7 @@ contains
 	include 'mpif.h'
 		
 		call MPI_Bcast(config%nRegions,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(config%zeemanSynthesis,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 		
 		if (myrank /= 0) then
 			allocate(lineList(config%nRegions))
@@ -180,7 +181,7 @@ contains
 		
 		do i = 1, config%nRegions
 			call MPI_Pack(lineList(i)%stokesOut, 4*lineList(i)%nLambdaTotal*config%nPixelsChunk, MPI_DOUBLE_PRECISION, packageStokes, packageSizeStokes, pos, MPI_COMM_WORLD,ierr)
-		enddo		
+		enddo
 		
 		call MPI_Send(packageStokes, packageSizeStokes, MPI_PACKED, 0, 11, MPI_COMM_WORLD, ierr)
 							
@@ -197,11 +198,11 @@ contains
 	include 'mpif.h'
 	integer :: status(MPI_STATUS_SIZE)
 	
-		call MPI_Recv(packageStokes, packageSizeStokes, MPI_PACKED, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, status, ierr)
+		call MPI_Recv(packageStokes, packageSizeStokes, MPI_PACKED, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, status, ierr)		
 		
 		pos = 0
 		call MPI_Unpack(packageStokes, packageSizeStokes, pos, slave, 1, MPI_INTEGER, MPI_COMM_WORLD,ierr)
-		
+	
 		call MPI_Unpack(packageStokes, packageSizeStokes, pos, atmosphere%modelsInChunk, 1, MPI_INTEGER, MPI_COMM_WORLD,ierr)
 		call MPI_Unpack(packageStokes, packageSizeStokes, pos, atmosphere%xPosChunk, config%nPixelsChunk, MPI_INTEGER, MPI_COMM_WORLD,ierr)
 		call MPI_Unpack(packageStokes, packageSizeStokes, pos, atmosphere%yPosChunk, config%nPixelsChunk, MPI_INTEGER, MPI_COMM_WORLD,ierr)

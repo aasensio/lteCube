@@ -1,7 +1,8 @@
 module synthModule
-use globalModule, only : OPA, PH, PC, PK, PHK, UMA, EV_ERG, SQRTPI, LARMOR, atmosphereType, lineListType, transitionType, configType
+use globalModule, only : OPA, PH, PC, PK, PHK, UMA, EV_ERG, SQRTPI, LARMOR, atmosphereType, lineListType, transitionType, &
+	configType, myrank
 use atomicPartitionModule, only : partitionAtomic
-use mathsModule, only : saha, vecfvoigt, calculateDamping, planckFrequency, shortCharacteristics, computeHeight, gasPressure, vecfvoigt2, &
+use mathsModule, only : saha, vecfvoigt2, calculateDamping, planckFrequency, shortCharacteristics, computeHeight, gasPressure, vecfvoigt2, &
 	vecfvoigt_zeeman, vecfvoigt_zeeman2, strength_zeeman, formal_sol_polarized, linInterpol
 use backgroundOpacityModule, only : backgroundOpacity
 implicit none
@@ -138,9 +139,9 @@ contains
 	end subroutine zeeman_opacity
 	
 !------------------------------------------------
-! Synthesize all lines in a region
+! Synthesize all lines in a region for Stokes I, Q, U and V
 !------------------------------------------------
-	subroutine synthLines(atmosphere, lineList, chunkIndex)
+	subroutine synthLinesZeeman(atmosphere, lineList, chunkIndex)
 	type(atmosphereType) :: atmosphere
 	type(lineListType) :: lineList
 	real(kind=8) :: n1overn0, n2overn1, ei1, ei2, weight, abundance
@@ -168,10 +169,6 @@ contains
 		do i = 1, lineList%nLines
 			call partitionAtomic(atmosphere%T, lineList%transition(i)%element, atmosphere%u1, atmosphere%u2, &
 				atmosphere%u3, ei1, ei2, weight, atmosphere%abundance)
-			! do j = 1, atmosphere%nDepths
-			! 	call partitionAtomic(atmosphere%T(j), lineList%transition(i)%element, atmosphere%u1(j), atmosphere%u2(j), &
-			! 		atmosphere%u3(j), ei1, ei2, weight, atmosphere%abundance)		
-			! enddo
 			
 			atmosphere%n1overn0 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u1, atmosphere%u2, ei1)
 			atmosphere%n2overn1 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u2, atmosphere%u3, ei2)
@@ -221,6 +218,85 @@ contains
 			lineList%stokesOut(chunkIndex,:,i) = formal_sol_polarized(atmosphere%height, lineList%opacity(:,:,i), lineList%source(:,i), 1.d0, lineList%boundary(:,i), 1)
 		enddo
 							
+	end subroutine synthLinesZeeman
+
+
+!------------------------------------------------
+! Synthesize all lines in a region for Stokes I
+!------------------------------------------------
+	subroutine synthLines(atmosphere, lineList, chunkIndex)
+	type(atmosphereType) :: atmosphere
+	type(lineListType) :: lineList
+	real(kind=8) :: n1overn0, n2overn1, ei1, ei2, weight, abundance
+	real(kind=8), allocatable :: voigtProfile(:)
+	integer :: i, j, loop, fromLambda, toLambda, k, chunkIndex
+					 		 		 				
+		fromLambda = 1
+		loop = 1
+		
+		lineList%opacity = 0.d0
+		lineList%opacityContinuum = 0.d0
+		lineList%boundary = 0.d0
+		lineList%source = 0.d0
+		
+! Evaluate continuum opacity at the central wavelengths of the lines and then use linear interpolation
+		do j = 1, atmosphere%nDepths
+			do k = 1, lineList%nLines
+				lineList%lambdaForInterpolation(k) = lineList%transition(k)%lambda0
+				lineList%contOpacityForInterpolation(k) = backgroundOpacity(atmosphere%T(j), atmosphere%Pe(j), atmosphere%PH(j), atmosphere%PHminus(j), &
+					atmosphere%PHplus(j), atmosphere%PH2(j), atmosphere%PH2plus(j), lineList%transition(k)%lambda0)
+			enddo
+			call linInterpol(lineList%lambdaForInterpolation,lineList%contOpacityForInterpolation,lineList%lambda,lineList%opacityContinuum(j,:))
+		enddo
+		
+		do i = 1, lineList%nLines
+			call partitionAtomic(atmosphere%T, lineList%transition(i)%element, atmosphere%u1, atmosphere%u2, &
+				atmosphere%u3, ei1, ei2, weight, atmosphere%abundance)
+			
+			atmosphere%n1overn0 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u1, atmosphere%u2, ei1)
+			atmosphere%n2overn1 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u2, atmosphere%u3, ei2)
+			atmosphere%niovern = 1.d0 / (1.d0 + atmosphere%n1overn0 + atmosphere%n2overn1 * atmosphere%n1overn0)						
+						
+			select case (lineList%transition(i)%ionization)
+				case(1)
+					atmosphere%ui = atmosphere%u1
+				case(2)
+					atmosphere%ui = atmosphere%u2
+				case(3)
+					atmosphere%ui = atmosphere%u3
+			end select
+		
+! Compute line opacity
+			lineList%transition(i)%lineOpacity = OPA * lineList%transition(i)%gf / atmosphere%ui * dexp(-lineList%transition(i)%Elow / (PK * atmosphere%T)) *&
+				(1.d0 - dexp(-PHK * lineList%transition(i)%frequency0 / atmosphere%T)) * atmosphere%niovern * &
+				(atmosphere%nhtot * atmosphere%abundance)
+																							
+! Doppler width			
+			lineList%transition(i)%dopplerWidth = dsqrt(2.d0 * PK * atmosphere%T / (lineList%transition(i)%mass * UMA))
+			lineList%transition(i)%deltaNu = lineList%transition(i)%dopplerWidth * lineList%transition(i)%frequency0 / PC
+									
+! Compute the damping
+			lineList%transition(i)%damping = calculateDamping(atmosphere%T, atmosphere%nHtot, atmosphere%Pe, atmosphere%PTotal, &
+				lineList%transition(i)%dopplerWidth, ei1, lineList%transition(i)%Elow / EV_ERG, 0.d0, 0.d0, 0.d0, lineList%transition(i)%lambda0, &
+				lineList%transition(i)%alphaABO, lineList%transition(i)%sigmaABO, lineList%transition(i)%mass)
+				
+! Add to total opacity in the region
+			do j = 1, lineList%nLambdaTotal
+				atmosphere%coefficients(1,:) = vecfvoigt2(lineList%transition(i)%damping, (lineList%transition(i)%frequency0 - lineList%frequency(j) - &
+					lineList%transition(i)%frequency0 * atmosphere%vmac / PC) / lineList%transition(i)%deltaNu)
+				lineList%opacity(1,:,j) = lineList%opacity(1,:,j) + lineList%transition(i)%lineOpacity * atmosphere%coefficients(1,:) / (lineList%transition(i)%deltaNu * SQRTPI)
+				lineList%source(:,j) = planckFrequency(lineList%frequency(j), atmosphere%T)				
+				lineList%boundary(1,j) = lineList%source(1,j)
+			enddo
+			
+		enddo
+			
+! Add continuum opacity
+		lineList%opacity(1,:,:) = lineList%opacity(1,:,:) + lineList%opacityContinuum		
+										
+! Solve RT equation
+		lineList%stokesOut(chunkIndex,1,:) = shortCharacteristics(atmosphere%height, lineList%opacity(1,:,:), lineList%source, 1.d0, lineList%boundary(1,:), 1)		
+							
 	end subroutine synthLines
 	
 !------------------------------------------------
@@ -257,7 +333,11 @@ contains
 			call computeHeight(atmosphere%lTau500, atmosphere%opacity500, atmosphere%height)
 	
  			do j = 1, config%nRegions
- 				call synthLines(atmosphere, lineList(j), i)
+ 				if (config%zeemanSynthesis == 1) then
+ 					call synthLinesZeeman(atmosphere, lineList(j), i)
+ 				else
+ 					call synthLines(atmosphere, lineList(j), i)
+ 				endif
  			enddo
 		enddo   	
 		

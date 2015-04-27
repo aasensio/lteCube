@@ -1,4 +1,4 @@
 from netCDF4 import Dataset as nf
 
-ff = nf('test.out', 'r')
+ff = nf('test.nc', 'r')
 res=ff.variables['stokes1'][:]
