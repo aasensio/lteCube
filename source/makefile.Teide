@@ -18,29 +18,29 @@ clean:
 	find ../ -maxdepth 2 -name "lteCube" -delete
 
 lteCube: $(OBJECTS)
-        $(COMPILER) $(OBJECTS) $(OPTIONS_LINK) $(LIBS) -o $(FINAL_EXECUTABLE)
-        cp $(FINAL_EXECUTABLE) ../
+	$(COMPILER) $(OBJECTS) $(OPTIONS_LINK) $(LIBS) -o $(FINAL_EXECUTABLE)
+	cp $(FINAL_EXECUTABLE) ../
 
 vars.o: vars.f90
-        $(COMPILER) $(OPTIONS)  vars.f90
+	$(COMPILER) $(OPTIONS)  vars.f90
 
 maths.o: maths.f90 vars.o partition.o
-        $(COMPILER) $(OPTIONS)  maths.f90
+	$(COMPILER) $(OPTIONS)  maths.f90
         
 lte.o: lte.f90 vars.o maths.o partition.o synth.o io.o mpi.o
-        $(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) lte.f90
+	$(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) lte.f90
         
 partition.o: partition.f90
-        $(COMPILER) $(OPTIONS)  partition.f90
+	$(COMPILER) $(OPTIONS)  partition.f90
                 
 background.o: background.f90 maths.o
-        $(COMPILER) $(OPTIONS)  background.f90
+	$(COMPILER) $(OPTIONS)  background.f90
                         
 io.o: io.f90 vars.o
-        $(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) io.f90
+	$(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) io.f90
         
 mpi.o: mpi.f90 vars.o
-        $(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) mpi.f90
+	$(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) mpi.f90
         
 synth.o: synth.f90 partition.o vars.o background.o
-        $(COMPILER) $(OPTIONS)  synth.f90
+	$(COMPILER) $(OPTIONS)  synth.f90
