@@ -1,0 +1,19 @@
+1
+'/home/aasensio/cube3d/ltau500_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+'/home/aasensio/cube3d/nel_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+'/home/aasensio/cube3d/t_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+'/home/aasensio/cube3d/b_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+'/home/aasensio/cube3d/incl_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+'/home/aasensio/cube3d/azim_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+'/home/aasensio/cube3d/vy_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+288  288  194
+'results/test.out'
+0
+288
+1
+2
+112
+6300.8719
+0.021511894
+6301.498 29469.022 -0.745 26 1 56 839.9 0.243 2 1.5 2 1.833
+6302.494 29732.734 -1.203 26 1 56 856.9 0.240 1 3.0 0 0.0

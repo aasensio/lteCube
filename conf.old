@@ -1,0 +1,93 @@
+# Configuration File
+
+#***********************************
+# General information
+#***********************************
+[General]
+nx = 288
+ny = 288
+nDepths = 194
+File with output results = 'results/test.out'
+Number of pixels in chunk = 5 
+Number of spectral regions = 2
+Verbose = False
+
+[Model]
+logTau500 = '/net/nas4/fis/aasensio/3dcubes/ltau500_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+Electron density = '/net/nas4/fis/aasensio/3dcubes/nel_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+Temperature = '/net/nas4/fis/aasensio/3dcubes/t_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+Field strength = '/net/nas4/fis/aasensio/3dcubes/b_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+Field inclination = '/net/nas4/fis/aasensio/3dcubes/incl_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+Field azimuth = '/net/nas4/fis/aasensio/3dcubes/azim_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+LOS velocity = '/net/nas4/fis/aasensio/3dcubes/vy_tau3d.000000.mu100.phi000.DYNA_SPINOR.dat'
+
+#***********************************
+# Information about regions
+#***********************************
+[Region 1]
+Number of lines = 2
+Number of wavelengths = 112
+First wavelength = 6300.8719
+Wavelength Step = 0.021511894
+
+#***********************************
+# Information about spectral lines
+#***********************************
+	[[Line 1]]
+	Central wavelength = 6301.498
+	Energy lower = 3.654
+	loggf = -0.745
+	Atomic number = 26
+	Ionization stage = 1
+	Sigma0 = 839.9
+	Alpha = 0.243
+	Atomic weight = 56
+		[[[Lower level]]]		
+		J = 2
+		g = 1.5
+		[[[Upper level]]]				
+		J = 2
+		g = 1.833
+	[[Line 2]]
+	Central wavelength = 6302.494
+	Energy lower = 3.687	
+	loggf = -1.203
+	Atomic number = 26
+	Ionization stage = 1
+	Sigma0 = 856.9
+	Alpha = 0.240
+	Atomic weight = 56
+		[[[Lower level]]]
+		J = 1
+		g = 3.0
+		[[[Upper level]]]
+		J = 0
+		g = 0.0
+
+#***********************************
+# Information about regions
+#***********************************
+[Region 2]
+Number of lines = 1
+Number of wavelengths = 112
+First wavelength = 5245.0
+Wavelength Step = 0.021511894
+
+#***********************************
+# Information about spectral lines
+#***********************************
+	[[Line 1]]
+	Central wavelength = 6301.498
+	Energy lower = 3.654	
+	loggf = -0.745
+	Atomic number = 26
+	Ionization stage = 1
+	Sigma0 = 839.9
+	Alpha = 0.243
+	Atomic weight = 56
+		[[[Lower level]]]
+		J = 2
+		g = 0.0
+		[[[Upper level]]]
+		J = 2
+		g = 0.0
