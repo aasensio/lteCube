@@ -32,7 +32,7 @@ implicit none
 		call read3DModels(config, atmosphere3D)
 		atmosphere%nDepths = config%nDepths
 		allocate(atmosphere%lTau500(atmosphere%nDepths))
-		atmosphere%lTau500 = atmosphere3D%lTau500
+		atmosphere%lTau500 = atmosphere3D%lTau500		
 	endif
 					
 ! Broadcast information to all nodes	
@@ -40,6 +40,12 @@ implicit none
 		
 ! Allocate memory for atmospheres in all nodes
 	call initAtmospheres(config, atmosphere)
+
+! lTau500 has been already allocated and set in the master. Allocate memory for the slaves
+	if (myrank /= 0) then
+		if (associated(atmosphere%lTau500)) deallocate(atmosphere%lTau500)
+		allocate(atmosphere%lTau500(atmosphere%nDepths))
+	endif
 
 ! Broadcast common logTau500 axis
 	call MPI_Bcast(atmosphere%lTau500,atmosphere%nDepths,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)

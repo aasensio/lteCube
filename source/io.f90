@@ -161,10 +161,7 @@ contains
 	type(configType) :: config
 	type(atmosphereType) :: atmosphere
 	integer :: i
-   		
-		if (associated(atmosphere%lTau500)) deallocate(atmosphere%lTau500)
-		allocate(atmosphere%lTau500(atmosphere%nDepths))
-				
+   							
 		if (associated(atmosphere%height)) deallocate(atmosphere%height)
 		allocate(atmosphere%height(atmosphere%nDepths))
 		
@@ -311,7 +308,7 @@ contains
 		if (config%verbose == 1) write(*,*) 'Reading logTau500 axis...'
 		allocate(atmosphere3D%lTau500(config%nDepths))
 		open(unit=12,file=config%lTau500File,action='read',access='stream',status='old')
-		read(12) atmosphere3D%lTau500
+		read(12) atmosphere3D%lTau500	
 		close(12)
 				
 		allocate(dummy(config%nx, config%nDepths, config%ny))
