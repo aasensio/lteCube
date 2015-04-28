@@ -1197,10 +1197,7 @@ contains
  		do i = 2, size(lTau5)
  			avgOpacity = 0.5d0 * (opacity5(i) + opacity5(i-1))
  			height(i) = height(i-1) - (10.d0**lTau5(i) - 10.d0**lTau5(i-1)) / avgOpacity
- 			print *, lTau5(i), opacity5(i), height(i)
  		enddo 		 		
-
- 		stop
  						
 ! Put z=0 at the point where tau500=1
 		loc = minloc(abs(10.d0**lTau5-1.d0))		
