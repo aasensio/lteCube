@@ -19,7 +19,7 @@ implicit none
 		integer :: nDepths, nNodes, modelsInChunk
 		real(kind=8) :: abundance
 		real(kind=8), dimension(:), pointer :: lTau500, height, T, nodes, niovern, ui, u1, u2, u3, n2overn1, n1overn0, microturbulence, vmac, B, thetaB, chiB
-		real(kind=8), dimension(:), pointer :: opacity500, splitting
+		real(kind=8), dimension(:), pointer :: opacity500, splitting, molecularAbundance, molecularPartition
  		real(kind=8), dimension(:), pointer :: Pe, Pg, PH, PHminus, PHplus, PH2, PH2plus, PTotal, nHtot, TOrdered, lTau500Ordered
  		real(kind=8), dimension(:,:), pointer :: lTau500Chunk, TChunk, vmacChunk, BChunk, thetaBChunk, chiBChunk, PeChunk
  		real(kind=8), dimension(:,:), pointer :: profile, zeeman_voigt, zeeman_faraday, coefficients
@@ -35,7 +35,7 @@ implicit none
 
 	type transitionType
 		integer :: nLambda, element, ionization, nComponents(3)
-		logical :: active
+		logical :: active, molecule
 		real(kind=8) :: lambda0, gf, Elow, gu, Ju, gl, Jl, sigmaABO, alphaABO, lambdaLeft, lambdaRight, mass
 		real(kind=8) :: frequency0, boundary
 		real(kind=8), dimension(:), pointer :: lineOpacity, backOpacity, dopplerWidth, deltaNu, damping
@@ -54,11 +54,19 @@ implicit none
 	end type lineListType
 	
 	type configType
-		integer :: nPixelsChunk, nx, ny, nDepths, nRegions, nprocs, verbose, remainingColumns, activeSlaves, zeemanSynthesis
+		integer :: nPixelsChunk, nx, ny, nDepths, nRegions, nprocs, verbose, remainingColumns, activeSlaves, zeemanSynthesis, chemicalEquilibriumOption
 		integer :: outputID, nx_id, ny_id, nstokes_id, nRegions_id, initialPixel
 		integer, pointer :: regionSize_id(:), regionLambda_id(:), regionStokes_id(:)
 		character(len=100) :: PeFile, TFile, BFile, thetaBFile, chiBFile, vFile, out_file, lTau500File
 	end type configType
+
+	real(kind=8), parameter :: CHPartitionT(15) = (/1000.d0,1500.d0,2000.d0,2500.d0,3000.d0,3500.d0,4000.d0,4500.d0,5000.d0,5500.d0,6000.d0,6500.d0,7000.d0,7500.d0,8000.d0/)
+	real(kind=8), parameter :: CHPartitionU(15) = (/135.80691,218.34335,313.03912,422.82003,549.45839,694.31549,858.62851,1043.5906,1250.3427,1479.9248,1733.2079,&
+		2010.8152,2313.0385,2639.7540,2990.3400/)
+	real(kind=8), parameter :: CHEquilibrium(9) = (/7.04641,-8.49562,-9.63745,-8.30710,-1.72875,-4.09372,0.94498,-1.01589,0.04693/)
+
+	real(kind=8), dimension(92) :: atomicE1, atomicE2, atomicWeight, atomicAbundance, atomicAffinity
+	character(len=2), dimension(92) :: atomicName
 
 			
 	type(atmosphereType) :: atmosphere	

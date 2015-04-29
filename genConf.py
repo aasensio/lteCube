@@ -42,6 +42,12 @@ if (config['general']['zeeman synthesis'] == 'yes'):
 else:
 	file.write("0\n")
 
+if (config['general']['chemical equilibrium'] == 'simple'):
+        file.write("0\n")
+
+if (config['general']['chemical equilibrium'] == 'complete'):
+        file.write("1\n")
+
 file.write("'"+config['model']['logtau500']+"'\n")
 file.write("'"+config['model']['electron density']+"'\n")
 file.write("'"+config['model']['temperature']+"'\n")

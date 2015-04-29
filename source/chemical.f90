@@ -711,7 +711,7 @@ contains
 	subroutine read_equil_cte
 	integer :: i, j
 
-		open(unit=42,file='TE_data/equil_cte.dat',status='old',action='read')
+		open(unit=42,file='data/equil_cte.dat',status='old',action='read')
 		read(42,*)
 		do i = 1, 273
 			read(42,FMT='(A16,5X,F8.5,2X,F10.5,3X,F10.5,5X,F10.5,3X,F10.5,4X,F10.5,4X,F10.5,6X,F9.5,1X,F9.5)')&
@@ -725,20 +725,21 @@ contains
 !-------------------------------------------------------------------
 ! Read the elements included in the molecules
 !-------------------------------------------------------------------	
-	subroutine read_elements
+	subroutine read_elements(e1, ab, aff, names)
+	real(kind=8) :: e1(92), ab(92), aff(92)
+	character(len=2) :: names(92)
+	integer, parameter :: which(21) = (/1,2,6,7,8,9,11,12,13,14,15,16,17,19,20,22,24,25,26,28,29/)
 	integer :: i
-		open(unit=42,file='TE_data/elements.dat',status='old',action='read')
-		read(42,*) 
-		
+
 		do i = 1, 21
-			read(42,*) elements(i), abund_atom(i), pot_ion(i), afinidad(i)
-! OLD			
-			abund_atom(i) = 10.d0**(abund_atom(i)-12.d0)
-! Now use the element abundance read in the main program and enhanced as desired
-! 			abund_atom(i) = abundance(which_index_element(i))
+			elements(i) = names(which(i))
+			abund_atom(i) = ab(which(i))
+			pot_ion(i) = e1(which(i))
+			afinidad(i) = aff(which(i))		
 		enddo
-	
-		close(42)
+
+		abund_atom = 10.d0**(abund_atom-12.d0)
+			
 	end subroutine read_elements
 	
 !-------------------------------------------------------------------
@@ -879,7 +880,7 @@ contains
 	integer :: i, j, codigo, cod_specie, carga
 	real(kind=8) :: data(7)
 
-		open(unit=42,file='TE_data/atomic.dat',status='old',action='read')
+		open(unit=42,file='data/atomic.dat',status='old',action='read')
 		
 		atomic_partition = 0.d0
 		do i = 1, 59
@@ -940,7 +941,7 @@ contains
 		
 		includ = 0
 		
-		open(unit=43,file='TE_data/species_all.dat',status='old',action='read')
+		open(unit=43,file='data/species.dat',status='old',action='read')
 		
 		read(43,*) n_included
 		if (allocated(which_included)) deallocate(which_included)
@@ -1000,11 +1001,10 @@ end module lectura
 !*******************************************************************
 !*******************************************************************
 
-module chemical_eq
+module chemicalModule
 use variables
 use lectura
 use maths_chemical
-use iso_c_binding, only: c_int, c_double, c_char, c_null_char
 
 implicit none
 contains
@@ -1131,24 +1131,24 @@ contains
 !  PH2_out : partial pressure of H2 molecules (dyn/cm^2)
 !  PH2plus_out : partial pressure of H2+ molecules (dyn/cm^2)
 !-----------------------------------------------------------------
-	function calculate_abundance_Pg_from_T_Pe(mol_code, n_grid, height_in, temper_in, Pe_in, &
-		abundance_file, PH_out, PHminus_out, PHplus_out, PH2_out, PH2plus_out, P_total)
+	function calculate_abundance_Pg_from_T_Pe(mol_code, n_grid, temper_in, Pe_in, &
+		PH_out, PHminus_out, PHplus_out, PH2_out, PH2plus_out, P_total)
+
 	integer :: n_grid, mol_code
-	real(kind=8) :: height_in(n_grid), temper_in(n_grid), Pe_in(n_grid), n_e_in(n_grid)
+	real(kind=8) :: temper_in(n_grid), Pe_in(n_grid), n_e_in(n_grid)
 	real(kind=8) :: calculate_abundance_Pg_from_T_Pe(n_grid), abun_out(n_grid), initial_values(22)
-	real(kind=8), dimension(n_grid) :: PH_out, PHminus_out, PHplus_out, PH2_out, PH2plus_out, P_total
-	character(len=40) :: abundance_file
+	real(kind=8), dimension(n_grid) :: PH_out, PHminus_out, PHplus_out, PH2_out, PH2plus_out, P_total	
 	real(kind=8) :: mole(273), height, minim_ioniz
 	integer :: i, ind, l, loop	, minim
 	
 		do loop = 1, n_grid
-		
-			height = height_in(loop)
+					
 			temper = temper_in(loop)
 			P_elec = Pe_in(loop)
 
 ! Calculating molecular equilibrium constants
 			call calc_equil_onlyusedmols(temper)
+
 ! Calculating ionic equilibrium constants
 			call calc_equil_atomic(temper)		
 
@@ -1194,8 +1194,7 @@ contains
 				endif
 			endif
 			
-			if (.not.(mole(i)>0) .and. .not.(mole(i)<=0) ) mole(i) = 0.d0
-			write(45,*) height, mole(i)
+			if (.not.(mole(i)>0) .and. .not.(mole(i)<=0) ) mole(i) = 0.d0			
 			abun_out(loop) = mole(i)
 			
 ! Now extract also the partial pressure from H, H-, H+, H2 and H2+
@@ -1212,12 +1211,8 @@ contains
 
 		enddo
 
-		close(45)
-		print *, 'Calculated abundance for molecule : ', molec(mol_code)		
 		calculate_abundance_Pg_from_T_Pe = abun_out
 		
-		deallocate(which_included)
-
 	end function calculate_abundance_Pg_from_T_Pe
 
 
@@ -1327,14 +1322,16 @@ contains
 	end function calculate_abundance_from_T_Pe_Pg
 	
 	
-	subroutine initChemical()
+	subroutine initChemical(e1, ab, aff, names)
+	real(kind=8) :: e1(92), ab(92), aff(92)
+	character(len=2) :: names(92)
 
 ! Reading equilibrium constants of the 273 molecules included
 		call read_equil_cte
 ! Reading equilibrium constants of atomic and ionic species
 		call read_partition_cte_atomic
 ! Reading 21 elements
-		call read_elements
+		call read_elements(e1, ab, aff, names)
 ! Reading estequiometer values
 		call read_estequio
 ! Reading composition of the 273 molecules
@@ -1342,36 +1339,16 @@ contains
 ! Reading what molecules are included
 		call read_what_species
 
-	end subroutine c_init
+	end subroutine initChemical
 	
-	subroutine c_abundance(nT, T, Pg, abunOut)
-	integer(c_int), intent(in) :: nT
-	real(c_double), intent(in), dimension(nT) :: T, Pg
-	real(c_double), intent(out), dimension(273,nT) :: abunOut
+	subroutine getAbundance(molCode, nT, T, Pe, PH, PHminus, PHplus, PH2, PH2plus, Pg, abundanceMolecule)
+	integer, intent(in) :: nT, molCode
+	real(kind=8), intent(in), dimension(nT) :: T, Pe
+	real(kind=8), intent(out), dimension(nT) :: PH, PHminus, PHplus, PH2, PH2plus, Pg, abundanceMolecule
 	integer :: i
-	character(len=40) :: file
-	real(kind=8), dimension(nT) :: PH_out, PHminus_out, PHplus_out, PH2_out, PH2plus_out, Pe
-	real(kind=8), dimension(nT) :: h
 	
-		file = 'test'
-		h = 1.d0
-		
-		abunOut = calculate_abundance_Pe_from_T_Pg(nT, h, T, Pg, file, &
-			PH_out, PHminus_out, PHplus_out, PH2_out, PH2plus_out, Pe)
+		abundanceMolecule = calculate_abundance_Pg_from_T_Pe(molCode, nT, T, Pe, PH, PHminus, PHplus, PH2, PH2plus, Pg)
 					
-	end subroutine c_abundance
+	end subroutine getAbundance
 	
-	
-	subroutine c_getmolecules(molecNames, which) bind(c)
-! 	character(c_char), intent(out), dimension(273) :: molecNames
-	character(c_char), intent(out) :: molecNames(16)
-	integer(c_int), intent(in) :: which
-	character(len=16) :: m
-	integer :: i, j
-		
-		molecNames(1:16) = transfer(molec(which), molecNames(1:16))
-		
-	end subroutine c_getmolecules
-
-
-end module chemical_eq
+end module chemicalModule

@@ -4,7 +4,7 @@ DEBUG = -g -fbacktrace
 OPTIONS = -O3 -c -ffree-line-length-none # $(DEBUG)
 
 FINAL_EXECUTABLE = lteCube
-OBJECTS = vars.o maths.o partition.o background.o lte.o synth.o io.o mpi.o
+OBJECTS = vars.o maths.o partition.o background.o lte.o synth.o io.o mpi.o chemical.o
 NETCDF_LIB = /usr/lib64
 NETCDF_INCLUDE = /usr/lib64/gfortran/modules
 LIBS = -L$(NETCDF_LIB) -lnetcdff
@@ -26,11 +26,14 @@ vars.o: vars.f90
 
 maths.o: maths.f90 vars.o partition.o
 	$(COMPILER) $(OPTIONS)  maths.f90
+
+chemical.o: chemical.f90
+	$(COMPILER) $(OPTIONS)  chemical.f90
 	
-lte.o: lte.f90 vars.o maths.o partition.o synth.o io.o mpi.o
+lte.o: lte.f90 vars.o maths.o partition.o synth.o io.o mpi.o chemical.o
 	$(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) lte.f90
 	
-partition.o: partition.f90
+partition.o: partition.f90 vars.o
 	$(COMPILER) $(OPTIONS)  partition.f90
 		
 background.o: background.f90 maths.o
@@ -39,9 +42,9 @@ background.o: background.f90 maths.o
 io.o: io.f90 vars.o
 	$(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) io.f90
 	
-mpi.o: mpi.f90 vars.o
+mpi.o: mpi.f90 vars.o chemical.o
 	$(COMPILER) $(OPTIONS) -I$(NETCDF_INCLUDE) mpi.f90
 	
-synth.o: synth.f90 partition.o vars.o background.o
+synth.o: synth.f90 partition.o vars.o background.o chemical.o
 	$(COMPILER) $(OPTIONS)  synth.f90
 	

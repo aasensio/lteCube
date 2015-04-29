@@ -1,6 +1,8 @@
 module mpiModule
-use globalModule, only : configType, packageAtmosphere, packageSizeAtmosphere, lineListType, atmosphereType, atmosphere3D, packageStokes, packageSizeStokes
+use globalModule, only : configType, packageAtmosphere, packageSizeAtmosphere, lineListType, atmosphereType, atmosphere3D, packageStokes, packageSizeStokes,&
+	atomicE1, atomicE2, atomicWeight, atomicAbundance, atomicAffinity, atomicName
 use ioModule, only : check
+use variables
 use netcdf
 implicit none
 
@@ -57,13 +59,52 @@ contains
 				call MPI_Bcast(lineList(j)%transition(i)%Ju,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
 				call MPI_Bcast(lineList(j)%transition(i)%gl,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
 				call MPI_Bcast(lineList(j)%transition(i)%gu,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+				call MPI_Bcast(lineList(j)%transition(i)%molecule,1,MPI_LOGICAL,0,MPI_COMM_WORLD,ierr)			
 				
 			enddo
 		enddo
 		
 		call MPI_Bcast(atmosphere%nDepths,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)									
 				
-		call MPI_Bcast(config%nPixelsChunk,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)		
+		call MPI_Bcast(config%nPixelsChunk,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+
+! Broadcast information for chemical equilibrium
+		call MPI_Bcast(equil,273,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+
+		do i = 1, 21
+			call MPI_Bcast(elements(i),2,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+		enddo
+
+		call MPI_Bcast(abund_atom,21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(pot_ion,21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(afinidad,21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+
+		call MPI_Bcast(estequio,273*21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(charge,273,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+
+		do i = 1, 273
+			call MPI_Bcast(nombre_mol(i),16,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+		enddo
+
+		call MPI_Bcast(composicion,273*4,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(n_atoms_mol,273,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+
+		call MPI_Bcast(n_included,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+
+		if (myrank /= 0) then
+			allocate(which_included(n_included))
+		endif
+
+		call MPI_Bcast(which_included,n_included,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+
+		call MPI_Bcast(atomicE1,92,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(atomicE2,92,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(atomicWeight,92,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(atomicAbundance,92,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(atomicAffinity,92,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		do i = 1, 92
+			call MPI_Bcast(atomicName(i),2,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
+		enddo
 		
  	end subroutine mpiBroadcastGeneral
  	
@@ -183,7 +224,7 @@ contains
 			call MPI_Pack(lineList(i)%stokesOut, 4*lineList(i)%nLambdaTotal*config%nPixelsChunk, MPI_DOUBLE_PRECISION, packageStokes, packageSizeStokes, pos, MPI_COMM_WORLD,ierr)
 		enddo
 		
-		call MPI_Send(packageStokes, packageSizeStokes, MPI_PACKED, 0, 11, MPI_COMM_WORLD, ierr)
+		call MPI_Send(packageStokes, packageSizeStokes, MPI_PACKED, 0, 3, MPI_COMM_WORLD, ierr)
 							
 	end subroutine Slave2Master_SendStokes
 	
@@ -198,7 +239,7 @@ contains
 	include 'mpif.h'
 	integer :: status(MPI_STATUS_SIZE)
 	
-		call MPI_Recv(packageStokes, packageSizeStokes, MPI_PACKED, MPI_ANY_SOURCE, 11, MPI_COMM_WORLD, status, ierr)		
+		call MPI_Recv(packageStokes, packageSizeStokes, MPI_PACKED, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, status, ierr)		
 		
 		pos = 0
 		call MPI_Unpack(packageStokes, packageSizeStokes, pos, slave, 1, MPI_INTEGER, MPI_COMM_WORLD,ierr)

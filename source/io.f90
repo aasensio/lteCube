@@ -1,5 +1,6 @@
 module ioModule
-use globalModule, only : PC, PH, PK, PI, lineListType, configType, atmosphereType, atmosphere3DType, transitionType
+use globalModule, only : PC, PH, PK, PI, lineListType, configType, atmosphereType, atmosphere3DType, transitionType, atomicE1, &
+	atomicE2, atomicWeight, atomicAbundance, atomicName, atomicAffinity
 use netcdf
 implicit none
 contains
@@ -47,6 +48,7 @@ contains
 		
 		read(12,*) config%verbose
 		read(12,*) config%zeemanSynthesis
+		read(12,*) config%chemicalEquilibriumOption
 		read(12,*) config%lTau500File
 		read(12,*) config%PeFile
 		read(12,*) config%TFile
@@ -92,6 +94,19 @@ contains
 				read(12,*) lineList(j)%transition(i)%lambda0, lineList(j)%transition(i)%Elow, lineList(j)%transition(i)%gf, lineList(j)%transition(i)%element, &
 					lineList(j)%transition(i)%ionization, lineList(j)%transition(i)%mass, lineList(j)%transition(i)%sigmaABO, lineList(j)%transition(i)%alphaABO, &
 					lineList(j)%transition(i)%Jl, lineList(j)%transition(i)%gl, lineList(j)%transition(i)%Ju, lineList(j)%transition(i)%gu
+
+				lineList(j)%transition(i)%molecule = .FALSE.
+				if (lineList(j)%transition(i)%element > 100) then
+					lineList(j)%transition(i)%molecule = .TRUE.
+					
+					! select case(lineList(j)%transition(i)%element)
+					! 	case(101)
+					! 		lineList(j)%transition(i)%molecule = 'CH'
+					! end select
+
+					lineList(j)%transition(i)%element = abs(lineList(j)%transition(i)%element)
+				endif
+
 				
 				if (config%verbose == 1) then
 					write(*,*) 'Region ', j, ' - Line ', i, ' - l0=', lineList(j)%transition(i)%lambda0,' A'
@@ -151,6 +166,14 @@ contains
 			enddo
 
 		endif
+
+! Read abundances, ionization potentials, affinities and names
+		open(unit=12, file='data/abundances.dat', action='read', status='old')
+		read(12,*)
+		do i = 1, 92
+			read(12,*) atomicName(i), atomicE1(i), atomicE2(i), atomicWeight(i), atomicAbundance(i), atomicAffinity(i)
+		enddo
+		close(12)
 						
 	end subroutine readConfigFile
 
@@ -182,6 +205,12 @@ contains
 				
 		if (associated(atmosphere%niovern)) deallocate(atmosphere%niovern)
 		allocate(atmosphere%niovern(atmosphere%nDepths))
+
+		if (associated(atmosphere%molecularAbundance)) deallocate(atmosphere%molecularAbundance)
+		allocate(atmosphere%molecularAbundance(atmosphere%nDepths))
+
+		if (associated(atmosphere%molecularPartition)) deallocate(atmosphere%molecularPartition)
+		allocate(atmosphere%molecularPartition(atmosphere%nDepths))
 		
 		if (associated(atmosphere%ui)) deallocate(atmosphere%ui)
 		allocate(atmosphere%ui(atmosphere%nDepths))

@@ -1,10 +1,11 @@
 module synthModule
 use globalModule, only : OPA, PH, PC, PK, PHK, UMA, EV_ERG, SQRTPI, LARMOR, atmosphereType, lineListType, transitionType, &
-	configType, myrank
+	configType, myrank, CHEquilibrium, CHPartitionT, CHPartitionU
 use atomicPartitionModule, only : partitionAtomic
 use mathsModule, only : saha, vecfvoigt2, calculateDamping, planckFrequency, shortCharacteristics, computeHeight, gasPressure, vecfvoigt2, &
 	vecfvoigt_zeeman, vecfvoigt_zeeman2, strength_zeeman, formal_sol_polarized, linInterpol
 use backgroundOpacityModule, only : backgroundOpacity
+use chemicalModule, only : getAbundance
 implicit none
 contains
 
@@ -220,6 +221,37 @@ contains
 							
 	end subroutine synthLinesZeeman
 
+!------------------------------------------------
+! Compute molecular abundance
+!------------------------------------------------
+! 	subroutine molecularAbundance(molCode, atmosphere)
+! 	integer :: molCode
+! 	type(atmosphereType) :: atmosphere
+! 	real(kind=8) ::  ei1, ei2, weight, abundance
+		
+! ! CH
+! 		if (molCode == 101) then
+			
+! ! Hydrogen
+! 			call partitionAtomic(atmosphere%T, 1, atmosphere%u1, atmosphere%u2, atmosphere%u3, ei1, ei2, weight, abundance)			
+! 			atmosphere%n1overn0 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u1, atmosphere%u2, ei1)
+! 			atmosphere%n2overn1 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u2, atmosphere%u3, ei2)
+! 			atmosphere%niovern = atmosphere%nhtot * abundance / (1.d0 + atmosphere%n1overn0 + atmosphere%n2overn1 * atmosphere%n1overn0)
+
+! ! Carbon
+! 			call partitionAtomic(atmosphere%T, 6, atmosphere%u1, atmosphere%u2, atmosphere%u3, ei1, ei2, weight, abundance)
+! 			atmosphere%n1overn0 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u1, atmosphere%u2, ei1)
+! 			atmosphere%n2overn1 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u2, atmosphere%u3, ei2)
+! 			atmosphere%niovern = atmosphere%niovern * atmosphere%nhtot * abundance / (1.d0 + atmosphere%n1overn0 + atmosphere%n2overn1 * atmosphere%n1overn0)	
+		
+! 			atmosphere%niovern = atmosphere%niovern * PK * atmosphere%T / atmosphere%equilibriumConstant
+
+! 		endif
+
+! 		print *, atmosphere%niovern / atmosphere%nhtot
+! 		stop
+
+! 	end subroutine molecularAbundance
 
 !------------------------------------------------
 ! Synthesize all lines in a region for Stokes I
@@ -250,26 +282,38 @@ contains
 		enddo
 		
 		do i = 1, lineList%nLines
-			call partitionAtomic(atmosphere%T, lineList%transition(i)%element, atmosphere%u1, atmosphere%u2, &
-				atmosphere%u3, ei1, ei2, weight, atmosphere%abundance)
-			
-			atmosphere%n1overn0 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u1, atmosphere%u2, ei1)
-			atmosphere%n2overn1 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u2, atmosphere%u3, ei2)
-			atmosphere%niovern = 1.d0 / (1.d0 + atmosphere%n1overn0 + atmosphere%n2overn1 * atmosphere%n1overn0)						
-						
-			select case (lineList%transition(i)%ionization)
-				case(1)
-					atmosphere%ui = atmosphere%u1
-				case(2)
-					atmosphere%ui = atmosphere%u2
-				case(3)
-					atmosphere%ui = atmosphere%u3
-			end select
-		
+
+! Molecular line
+			if (lineList%transition(i)%molecule) then
+
 ! Compute line opacity
-			lineList%transition(i)%lineOpacity = OPA * lineList%transition(i)%gf / atmosphere%ui * dexp(-lineList%transition(i)%Elow / (PK * atmosphere%T)) *&
-				(1.d0 - dexp(-PHK * lineList%transition(i)%frequency0 / atmosphere%T)) * atmosphere%niovern * &
-				(atmosphere%nhtot * atmosphere%abundance)
+				lineList%transition(i)%lineOpacity = OPA * lineList%transition(i)%gf / atmosphere%molecularPartition * dexp(-lineList%transition(i)%Elow / (PK * atmosphere%T)) *&
+					(1.d0 - dexp(-PHK * lineList%transition(i)%frequency0 / atmosphere%T)) * atmosphere%molecularAbundance
+
+
+			else
+! Atomic line
+				call partitionAtomic(atmosphere%T, lineList%transition(i)%element, atmosphere%u1, atmosphere%u2, &
+					atmosphere%u3, ei1, ei2, weight, atmosphere%abundance)
+				
+				atmosphere%n1overn0 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u1, atmosphere%u2, ei1)
+				atmosphere%n2overn1 = saha(atmosphere%T, atmosphere%Pe, atmosphere%u2, atmosphere%u3, ei2)
+				atmosphere%niovern = 1.d0 / (1.d0 + atmosphere%n1overn0 + atmosphere%n2overn1 * atmosphere%n1overn0)						
+							
+				select case (lineList%transition(i)%ionization)
+					case(1)
+						atmosphere%ui = atmosphere%u1
+					case(2)
+						atmosphere%ui = atmosphere%u2
+					case(3)
+						atmosphere%ui = atmosphere%u3
+				end select
+! Compute line opacity
+				lineList%transition(i)%lineOpacity = OPA * lineList%transition(i)%gf / atmosphere%ui * dexp(-lineList%transition(i)%Elow / (PK * atmosphere%T)) *&
+					(1.d0 - dexp(-PHK * lineList%transition(i)%frequency0 / atmosphere%T)) * atmosphere%niovern * &
+					(atmosphere%nhtot * atmosphere%abundance)
+
+			endif		
 																							
 ! Doppler width			
 			lineList%transition(i)%dopplerWidth = dsqrt(2.d0 * PK * atmosphere%T / (lineList%transition(i)%mass * UMA))
@@ -318,10 +362,16 @@ contains
 			atmosphere%Pe = atmosphere%PeChunk(:,i)
 			
 ! Compute the chemical equilibrium
-			call gasPressure(atmosphere%Pe, atmosphere%T, atmosphere%PH, atmosphere%PHminus, atmosphere%PHplus, atmosphere%PH2, atmosphere%PH2plus, atmosphere%PTotal)							
+			call getAbundance(9, atmosphere%nDepths, atmosphere%T, atmosphere%Pe, atmosphere%PH, atmosphere%PHminus, atmosphere%PHplus, &
+					atmosphere%PH2, atmosphere%PH2plus, atmosphere%PTotal, atmosphere%molecularAbundance)
+
+			! call gasPressure(atmosphere%Pe, atmosphere%T, atmosphere%PH, atmosphere%PHminus, atmosphere%PHplus, atmosphere%PH2, atmosphere%PH2plus, atmosphere%PTotal)
 
 ! Total hydrogen density
 			atmosphere%nhtot = (atmosphere%PH + atmosphere%PHminus + atmosphere%PHplus + atmosphere%PH2 + atmosphere%PH2plus) / (PK * atmosphere%T)
+
+! Compute partition function
+			 call linInterpol(CHPartitionT, CHPartitionU, atmosphere%T, atmosphere%molecularPartition)
 				
 ! Generate height axis
 			do k = 1, atmosphere%nDepths
@@ -331,6 +381,16 @@ contains
 	
 ! Compute the height depth scale			
 			call computeHeight(atmosphere%lTau500, atmosphere%opacity500, atmosphere%height)
+
+! CH equilibrium constant
+			! atmosphere%equilibriumConstant = 0.d0
+			! do k = 0, 8
+				! atmosphere%equilibriumConstant = atmosphere%equilibriumConstant + CHEquilibrium(k+1) * (dlog10(5040.d0 / atmosphere%T))**i
+			! enddo
+
+! Transform the units from SI to cgs multipliying by 10 the necessary times depending on the
+! units of the equilibrium constant
+			! atmosphere%equilibriumConstant = 10.d0**atmosphere%equilibriumConstant * 10.d0
 	
  			do j = 1, config%nRegions
  				if (config%zeemanSynthesis == 1) then

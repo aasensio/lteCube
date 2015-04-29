@@ -1,8 +1,10 @@
 program lteCube
-use globalModule, only : config, lineList, atmosphere3D, atmosphere, PH, identity, packageAtmosphere, packageSizeAtmosphere, packageStokes, packageSizeStokes, myrank
+use globalModule, only : config, lineList, atmosphere3D, atmosphere, PH, identity, packageAtmosphere, packageSizeAtmosphere, packageStokes, &
+	packageSizeStokes, myrank, atomicE1, atomicAbundance, atomicAffinity, atomicName
 use ioModule, only : readConfigFile, initTransition, initAtmospheres, read3DModels, check
 use synthModule, only : generateAtomicZeemanComponents, synthAllRegionsAndPixels
 use mpiModule, only : mpiBroadcastGeneral, Master2Slave_SendAtmosphere, SlaveFromMaster_GetAtmosphere, Slave2Master_SendStokes, MasterFromSlave_GetStokes, killSlave
+use chemicalModule, only : initChemical
 use netcdf
 implicit none
 
@@ -33,6 +35,8 @@ implicit none
 		atmosphere%nDepths = config%nDepths
 		allocate(atmosphere%lTau500(atmosphere%nDepths))
 		atmosphere%lTau500 = atmosphere3D%lTau500		
+
+		call initChemical(atomicE1, atomicAbundance, atomicAffinity, atomicName)
 	endif
 					
 ! Broadcast information to all nodes	
@@ -91,6 +95,7 @@ implicit none
 		yPos = config%initialPixel / config%nx
 		xPos = config%initialPixel - yPos * config%nx + 1
 	endif
+
 
 ! FOR PROFILING
 	! if (myrank == 0) then
