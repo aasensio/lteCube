@@ -38,7 +38,7 @@ implicit none
 
 		call initChemical(atomicE1, atomicAbundance, atomicAffinity, atomicName)
 	endif
-					
+
 ! Broadcast information to all nodes	
 	call mpiBroadcastGeneral(myrank, config, lineList, atmosphere)
 		

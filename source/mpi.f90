@@ -70,17 +70,17 @@ contains
 
 ! Broadcast information for chemical equilibrium
 		call MPI_Bcast(equil,273,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
-
 		do i = 1, 21
 			call MPI_Bcast(elements(i),2,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
 		enddo
-
+		
 		call MPI_Bcast(abund_atom,21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		
 		call MPI_Bcast(pot_ion,21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
 		call MPI_Bcast(afinidad,21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
 
-		call MPI_Bcast(estequio,273*21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
-		call MPI_Bcast(charge,273,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(estequio,273*21,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(charge,273,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 
 		do i = 1, 273
 			call MPI_Bcast(nombre_mol(i),16,MPI_CHARACTER,0,MPI_COMM_WORLD,ierr)
@@ -89,7 +89,7 @@ contains
 		call MPI_Bcast(composicion,273*4,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 		call MPI_Bcast(n_atoms_mol,273,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
 
-		call MPI_Bcast(n_included,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(n_included,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)	
 
 		if (myrank /= 0) then
 			allocate(which_included(n_included))
