@@ -15,7 +15,7 @@ all:
 clean: 
 	find . -maxdepth 2 -name "*.o" -delete ; find . -maxdepth 1 -name "*.mod" -delete ;
 	find . -maxdepth 1 -name "*.f90~" -delete ; find . -maxdepth 2 -name "*.a" -delete ;
-	find ../ -maxdepth 2 -name "pylte.so" -delete
+	find ../ -maxdepth 2 -name "lteCube" -delete
 
 lteCube: $(OBJECTS)
 	$(COMPILER) $(OBJECTS) $(OPTIONS_LINK) $(LIBS) -o $(FINAL_EXECUTABLE)
