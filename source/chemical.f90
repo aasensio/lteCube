@@ -1160,7 +1160,7 @@ contains
 			call mnewt(2,100,x_sol(1:22),22,1.d-6,1.d-6)
 
 			do while (minval(x_sol(1:22)) < 0.d0)
-				print *, 'SOLVING AGAIN...'
+				! print *, 'SOLVING AGAIN...'
 				initial_values = initial_values / 10.d0
 				x_sol(1:22) = initial_values
 				call mnewt(2,100,x_sol(1:22),22,1.d-6,1.d-6)

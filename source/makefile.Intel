@@ -9,6 +9,10 @@ NETCDF_LIB = /usr/lib64
 NETCDF_INCLUDE = /usr/lib64/gfortran/modules
 LIBS = -L$(NETCDF_LIB) -lnetcdff
  
+lteCube: $(OBJECTS)
+	$(COMPILER) $(OBJECTS) $(OPTIONS_LINK) $(LIBS) -o $(FINAL_EXECUTABLE)
+	cp $(FINAL_EXECUTABLE) ../
+	
 all: 
 	make lteCube
 	
@@ -16,10 +20,6 @@ clean:
 	find . -maxdepth 2 -name "*.o" -delete ; find . -maxdepth 1 -name "*.mod" -delete ;
 	find . -maxdepth 1 -name "*.f90~" -delete ; find . -maxdepth 2 -name "*.a" -delete ;
 	find ../ -maxdepth 2 -name "lteCube" -delete
-
-lteCube: $(OBJECTS)
-	$(COMPILER) $(OBJECTS) $(OPTIONS_LINK) $(LIBS) -o $(FINAL_EXECUTABLE)
-	cp $(FINAL_EXECUTABLE) ../
 
 vars.o: vars.f90
 	$(COMPILER) $(OPTIONS)  vars.f90

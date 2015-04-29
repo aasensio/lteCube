@@ -73,13 +73,6 @@ for i in range(n_regions):
 		spectralLines = f.readlines()
 		f.close()
 
-	# check number of lines
-		# nLines = 0
-		# for l in spectralLines:
-		# 	res = l.split()
-		# 	if 
-
-
 	n_lines = int(config['region '+str(i+1)]['number of lines'])
 
 	file.write(config['region '+str(i+1)]['number of lines']+"\n")
