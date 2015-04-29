@@ -225,6 +225,7 @@ contains
 		enddo
 		
 		call MPI_Send(packageStokes, packageSizeStokes, MPI_PACKED, 0, 3, MPI_COMM_WORLD, ierr)
+		write(*,FMT='(A,I5)') ' * Slave -> Master - Send back result from slave ', slave
 							
 	end subroutine Slave2Master_SendStokes
 	
@@ -261,6 +262,8 @@ contains
  				call check( nf90_put_var(config%outputID, config%regionStokes_id(i), lineList(i)%valuesNetCDF, start=lineList(i)%startNetCDF, count=lineList(i)%countNetCDF) )
 			enddo
 		enddo
+
+		write(*,FMT='(A,I5)') ' * Master - Received and saved result from slave ', slave
 	
 	end subroutine MasterFromSlave_GetStokes
 	
