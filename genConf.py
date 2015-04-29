@@ -48,6 +48,7 @@ if (config['general']['chemical equilibrium'] == 'simple'):
 if (config['general']['chemical equilibrium'] == 'complete'):
         file.write("1\n")
 
+
 file.write("'"+config['model']['logtau500']+"'\n")
 file.write("'"+config['model']['electron density']+"'\n")
 file.write("'"+config['model']['temperature']+"'\n")
