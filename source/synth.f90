@@ -332,7 +332,7 @@ contains
 				lineList%source(:,j) = planckFrequency(lineList%frequency(j), atmosphere%T)				
 				lineList%boundary(1,j) = lineList%source(1,j)
 			enddo
-			
+		
 		enddo
 			
 ! Add continuum opacity

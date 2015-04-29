@@ -64,6 +64,22 @@ file.write(config['general']['number of spectral regions']+"\n")
 n_regions = int(config['general']['number of spectral regions'])
 
 for i in range(n_regions):
+
+# Check whether we are defining the spectral lines individually
+# or we are using a file with a linelist. Check the number of spectral lines
+	if (config['region '+str(i+1)].has_key('linelist filename')):
+		print "Reading linelist file {0}".format(config['region '+str(i+1)]['linelist filename'])
+		f = open(config['region '+str(i+1)]['linelist filename'],'r')
+		spectralLines = f.readlines()
+		f.close()
+
+	# check number of lines
+		# nLines = 0
+		# for l in spectralLines:
+		# 	res = l.split()
+		# 	if 
+
+
 	n_lines = int(config['region '+str(i+1)]['number of lines'])
 
 	file.write(config['region '+str(i+1)]['number of lines']+"\n")
@@ -73,11 +89,7 @@ for i in range(n_regions):
 
 # Check whether we are defining the spectral lines individually
 # or we are using a file with a linelist
-	if (config['region '+str(i+1)].has_key('linelist filename')):
-		print "Reading linelist file {0}".format(config['region '+str(i+1)]['linelist filename'])
-		f = open(config['region '+str(i+1)]['linelist filename'],'r')
-		spectralLines = f.readlines()
-		f.close()
+	if (config['region '+str(i+1)].has_key('linelist filename')):		
 		for l in spectralLines:
 			file.write(l)
 	else:		
