@@ -19,7 +19,7 @@ implicit none
 		integer :: nDepths, nNodes, modelsInChunk
 		real(kind=8) :: abundance
 		real(kind=8), dimension(:), pointer :: lTau500, height, T, nodes, niovern, ui, u1, u2, u3, n2overn1, n1overn0, microturbulence, vmac, B, thetaB, chiB
-		real(kind=8), dimension(:), pointer :: opacity500, splitting, molecularAbundance, molecularPartition
+		real(kind=8), dimension(:), pointer :: opacity500, splitting, molecularAbundance, molecularPartition, molecularEquilibrium
  		real(kind=8), dimension(:), pointer :: Pe, Pg, PH, PHminus, PHplus, PH2, PH2plus, PTotal, nHtot, TOrdered, lTau500Ordered
  		real(kind=8), dimension(:,:), pointer :: lTau500Chunk, TChunk, vmacChunk, BChunk, thetaBChunk, chiBChunk, PeChunk
  		real(kind=8), dimension(:,:), pointer :: profile, zeeman_voigt, zeeman_faraday, coefficients

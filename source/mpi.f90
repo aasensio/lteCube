@@ -20,6 +20,7 @@ contains
 		
 		call MPI_Bcast(config%nRegions,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 		call MPI_Bcast(config%zeemanSynthesis,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
+		call MPI_Bcast(config%chemicalEquilibriumOption,1,MPI_INTEGER,0,MPI_COMM_WORLD,ierr)
 		
 		if (myrank /= 0) then
 			allocate(lineList(config%nRegions))
@@ -96,6 +97,8 @@ contains
 		endif
 
 		call MPI_Bcast(which_included,n_included,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
+
+		call MPI_Bcast(atomic_partition,7*3*21,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
 
 		call MPI_Bcast(atomicE1,92,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)
 		call MPI_Bcast(atomicE2,92,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ierr)

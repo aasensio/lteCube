@@ -211,6 +211,9 @@ contains
 
 		if (associated(atmosphere%molecularPartition)) deallocate(atmosphere%molecularPartition)
 		allocate(atmosphere%molecularPartition(atmosphere%nDepths))
+
+		if (associated(atmosphere%molecularEquilibrium)) deallocate(atmosphere%molecularEquilibrium)
+		allocate(atmosphere%molecularEquilibrium(atmosphere%nDepths))
 		
 		if (associated(atmosphere%ui)) deallocate(atmosphere%ui)
 		allocate(atmosphere%ui(atmosphere%nDepths))

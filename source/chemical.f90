@@ -74,6 +74,7 @@ contains
 ! Then, P(i) = a(i) * (P_T-Pe)/K
 		x0_sol(1:21) = abund_atom * (P(22) - P_elec) / sum(abund_atom)
 
+
 		do i = 1, 21
 			salida = 0.d0
 
@@ -735,7 +736,7 @@ contains
 			elements(i) = names(which(i))
 			abund_atom(i) = ab(which(i))
 			pot_ion(i) = e1(which(i))
-			afinidad(i) = aff(which(i))		
+			afinidad(i) = aff(which(i))
 		enddo
 
 		abund_atom = 10.d0**(abund_atom-12.d0)
@@ -914,7 +915,7 @@ contains
 				enddo		
 				phi(k) = 10.d0**temp				
 			enddo
-									
+
 ! Positive ion constant
 			equilibrium_atomic(1,l) = 3.41405d0 + NA_ME + 2.5d0 * dlog10(T) - 5039.9d0 * pot_ion(l) / T + &
 				dlog10( 2.d0*phi(2)/phi(1) )
@@ -926,7 +927,7 @@ contains
 			equilibrium_atomic(2,l) = 10.d0**(equilibrium_atomic(2,l))
 						
 		enddo
-		
+
 ! Transform the units from N/m^2 to dyn/cm^2
 		equilibrium_atomic = equilibrium_atomic * 10.d0
 		
@@ -1136,7 +1137,7 @@ contains
 
 	integer :: n_grid, mol_code
 	real(kind=8) :: temper_in(n_grid), Pe_in(n_grid), n_e_in(n_grid)
-	real(kind=8) :: calculate_abundance_Pg_from_T_Pe(n_grid), abun_out(n_grid), initial_values(22)
+	real(kind=8) :: calculate_abundance_Pg_from_T_Pe(n_grid), initial_values(22)
 	real(kind=8), dimension(n_grid) :: PH_out, PHminus_out, PHplus_out, PH2_out, PH2plus_out, P_total	
 	real(kind=8) :: mole(273), height, minim_ioniz
 	integer :: i, ind, l, loop	, minim
@@ -1181,7 +1182,8 @@ contains
 					endif
 					mole(i) = mole(i) * x_sol(ind)**estequio(i,ind)
 				endif
-			enddo	
+			enddo
+
 			if (equilibrium(i) == 0.d0) then
 				mole(i) = 0.d0
 			else
@@ -1195,7 +1197,7 @@ contains
 			endif
 			
 			if (.not.(mole(i)>0) .and. .not.(mole(i)<=0) ) mole(i) = 0.d0			
-			abun_out(loop) = mole(i)
+			calculate_abundance_Pg_from_T_Pe(loop) = mole(i)
 			
 ! Now extract also the partial pressure from H, H-, H+, H2 and H2+
 			PH_out(loop) = x_sol(1)			
@@ -1210,8 +1212,6 @@ contains
 			endif
 
 		enddo
-
-		calculate_abundance_Pg_from_T_Pe = abun_out
 		
 	end function calculate_abundance_Pg_from_T_Pe
 
@@ -1346,7 +1346,7 @@ contains
 	real(kind=8), intent(in), dimension(nT) :: T, Pe
 	real(kind=8), intent(out), dimension(nT) :: PH, PHminus, PHplus, PH2, PH2plus, Pg, abundanceMolecule
 	integer :: i
-	
+		
 		abundanceMolecule = calculate_abundance_Pg_from_T_Pe(molCode, nT, T, Pe, PH, PHminus, PHplus, PH2, PH2plus, Pg)
 					
 	end subroutine getAbundance
